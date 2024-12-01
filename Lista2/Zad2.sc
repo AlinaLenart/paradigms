@@ -9,10 +9,10 @@ def split3Rec[A](list: List[A]) : (List[A], List[A], List[A]) =
   }
 
 def split3Tail[A](list: List[A]) : (List[A], List[A], List[A]) =
-  @scala.annotation.tailrec
+  @tailrec
   def split3Tail_helper(list: List[A], accum: (List[A], List[A], List[A])): (List[A], List[A], List[A]) =
     (list, accum) match {
-      case (x :: y :: z :: t, (l1, l2, l3)) => split3Tail_helper(t, (x :: l1, y :: l2, z :: l3))
+      case (x :: y :: z :: tail, (l1, l2, l3)) => split3Tail_helper(tail, (x :: l1, y :: l2, z :: l3))
       case _ => accum
     }
   split3Tail_helper(list, (Nil, Nil, Nil))
