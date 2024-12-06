@@ -1,0 +1,74 @@
+sealed trait Tree3[+A]
+case object Empty extends Tree3[Nothing]
+case class Node[A](value: A, left: Option[Tree3[A]], middle: Option[Tree3[A]], right: Option[Tree3[A]]) extends Tree3[A]
+
+object Tree3 {
+
+  // Funkcja łącząca dwa drzewa
+  def combineTree3[A](f: (A, A) => A)(tree1: Tree3[A], tree2: Tree3[A]): Tree3[A] = (tree1, tree2) match {
+    case (Empty, Empty) => Empty
+
+    case (Node(v1, l1, m1, r1), Node(v2, l2, m2, r2)) =>
+      val combineOption = (opt1: Option[Tree3[A]], opt2: Option[Tree3[A]]) => (opt1, opt2) match {
+        case (None, None) => None
+        case (Some(t1), None) => Some(Empty)
+        case (None, Some(t2)) => Some(Empty)
+        case (Some(t1), Some(t2)) => Some(combineTree3(f)(t1, t2))
+      }
+
+      Node(f(v1, v2),
+        combineOption(l1, l2),
+        combineOption(m1, m2),
+        combineOption(r1, r2))
+
+    case (Node(v, l, m, r), Empty) =>
+      // Zajmujemy się przypadkiem, gdzie pierwsze drzewo jest Node, a drugie Empty
+      val combineSingle = (opt: Option[Tree3[A]]) => opt match {
+        case None => None
+        case Some(t) => Some(combineTree3(f)(t, Empty))
+      }
+
+      Node(v,
+        combineSingle(l),
+        combineSingle(m),
+        combineSingle(r))
+
+    case (Empty, Node(v, l, m, r)) =>
+      // Zajmujemy się przypadkiem, gdzie pierwsze drzewo jest Empty, a drugie Node
+      val combineSingle = (opt: Option[Tree3[A]]) => opt match {
+        case None => None
+        case Some(t) => Some(combineTree3(f)(t, Empty))
+      }
+
+      Node(v,
+        combineSingle(l),
+        combineSingle(m),
+        combineSingle(r))
+  }
+
+  // Przykładowe drzewa
+  val tree1: Tree3[Int] = Node(1,
+    Some(Node(2,
+      Some(Node(8, None, None, None)),
+      None,
+      None)),
+    Some(Node(3, None, None, None)),
+    None)
+
+  val tree2: Tree3[Int] = Node(10,
+    Some(Node(20, None, None, None)),
+    None,
+    Some(Node(30, None, None, None)))
+
+  // Funkcja dodająca dwie liczby
+  val sum: (Int, Int) => Int = (x, y) => x + y
+
+  // Kombinowanie dwóch drzew
+  val combined: Tree3[Int] = combineTree3(sum)(tree1, tree2)
+
+  // Wyświetlanie wyniku
+  println(combined)
+
+}
+
+

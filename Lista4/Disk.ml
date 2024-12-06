@@ -4,15 +4,14 @@ type 'a file =
 type 'a folder = 
   | Folder of 'a * 'a folder list * 'a file list  (*nazwa, lista folderow, lista plikow*)
 
-
 type 'a disk = 
   | Disk of string * 'a folder list * 'a file list  (*nazwa, lista folderow, lista plikow*)
 
 (*czy powinno byc w nawiasach:  Disk of char * ('a folder list) * ('a file list)?*)
 
 
-let rec path (disk: 'a disk) (name: string) : string option =
-  let rec find_in_folder (folder: 'a folder) (name: string) (current_path: string) : string option =
+let rec path disk name =
+  let rec find_in_folder folder name current_path =
     match folder with
     | Folder (folder_name, subfolders, files) ->
         let folder_path = current_path ^ "\\" ^ folder_name in
@@ -61,7 +60,6 @@ let rec path (disk: 'a disk) (name: string) : string option =
               None
           in
           file_path
-
 
 
 

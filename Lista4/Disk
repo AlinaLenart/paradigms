@@ -1,0 +1,17 @@
+sealed trait DiskSystem
+
+case class File(name: String) extends DiskSystem
+
+case class Folder(name: String, folders: List[Folder], files: List[File]) extends DiskSystem
+
+case class Disk(name: Char, folders: List[Folder], files: List[File]) extends DiskSystem
+
+
+
+val file1 = File("Holidays.png")
+val file2 = File("Invoice.txt")
+
+val folder1 = Folder("Pictures", List(), List(file1))
+val folder2 = Folder("Documents", List(), List(file2))
+
+val disk1 = Disk('C', List(folder1, folder2), List())
