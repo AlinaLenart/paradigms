@@ -1,86 +1,88 @@
 type 'a file = 
-  | File of 'a  (*nazwa*)
+  | File of { name: 'a } (*nazwa*)
 
 type 'a folder = 
-  | Folder of 'a * 'a folder list * 'a file list  (*nazwa, lista folderow, lista plikow*)
+  | Folder of { 
+      name: 'a;              
+      subfolders: 'a folder list; 
+      files: 'a file list      
+    } (*nazwa, lista folderow, lista plikow*)
 
 type 'a disk = 
-  | Disk of string * 'a folder list * 'a file list  (*nazwa, lista folderow, lista plikow*)
-
-(*czy powinno byc w nawiasach:  Disk of char * ('a folder list) * ('a file list)?*)
+  | Disk of { 
+      name: string;              
+      folders: 'a folder list;   
+      files: 'a file list        
+    }  (*nazwa, lista folderow, lista plikow*)
 
 
 let rec path disk name =
+  
+  let rec find_in_files files name =
+    match files with
+    | [] -> None
+    | File { name = f_name } :: rest -> 
+        if f_name = name then Some f_name
+        else find_in_files rest name
+  in
+
   let rec find_in_folder folder name current_path =
     match folder with
-    | Folder (folder_name, subfolders, files) ->
+    | Folder { name = folder_name; subfolders; files } ->
         let folder_path = current_path ^ "\\" ^ folder_name in
-        if folder_name = name then Some (folder_path ^ "\\")
-        else
-          let file_path =
-            if List.exists (fun (File f_name) -> f_name = name) files then
-              Some (folder_path ^ "\\" ^ name)
-            else
-              None
-          in
-          match file_path with
-          | Some path -> Some path
-          | None ->
-              let rec search_subfolders = function
-                | [] -> None
-                | folder::rest -> 
-                    match find_in_folder folder name folder_path with
-                    | Some path -> Some path
-                    | None -> search_subfolders rest
-              in
-              search_subfolders subfolders
+        match find_in_files files name with
+        | Some f_name -> Some (folder_path ^ "\\" ^ f_name)
+        | None ->
+            let rec search_subfolders = function
+              | [] -> None
+              | subfolder :: rest ->
+                  match find_in_folder subfolder name folder_path with
+                  | Some path -> Some path
+                  | None -> search_subfolders rest
+            in
+            search_subfolders subfolders
   in
+
   match disk with
-  | Disk (disk_name, folders, files) ->
+  | Disk { name = disk_name; folders; files } ->
       let disk_path = disk_name ^ ":" in
-      let folder_path =
-        let rec search_top_folders = function
-          | [] -> None
-          | Folder (folder_name, _, _) as folder :: rest ->
-              if folder_name = name then Some (disk_path ^ "\\" ^ folder_name ^ "\\")
-              else
-                match find_in_folder folder name disk_path with
-                | Some path -> Some path
-                | None -> search_top_folders rest
-        in
-        search_top_folders folders
+      let rec search_top_folders = function
+        | [] -> None
+        | Folder { name = folder_name; _ } as folder :: rest ->
+            if folder_name = name then Some (disk_path ^ "\\" ^ folder_name ^ "\\")
+            else
+              match find_in_folder folder name disk_path with
+              | Some path -> Some path
+              | None -> search_top_folders rest
       in
-      match folder_path with
+      match search_top_folders folders with
       | Some path -> Some path
       | None ->
-          let file_path =
-            if List.exists (fun (File f_name) -> f_name = name) files then
-              Some (disk_path ^ "\\" ^ name)
-            else
-              None
-          in
-          file_path
+          match find_in_files files name with
+          | Some f_name -> Some (disk_path ^ "\\" ^ f_name)
+          | None -> None
+
+;;
 
 
 
-let file1 = File "Holidays.png";;
-let file2 = File "Invoice.txt" ;; 
-let folder1 = Folder ("Pictures", [], [file1]);;  
-let folder2 = Folder ("Documents", [], [file2]);;  
+(* let get message = function
+  | Some v -> v
+  | None -> raise (Invalid_argument message) *)
 
-let disk1 = Disk ("C", [folder1; folder2], []);;  
 
-let test1 = path disk1 "Holidays.png" ;;
-print_endline ("Test 1: " ^ (Option.value test1 ~default:"File not found"));;
+let file1 = File { name = "Holidays.png" };;
+let file2 = File { name = "Invoice.txt" };;
+let folder1 = Folder { name = "Pictures"; subfolders = []; files = [file1] };;
+let folder2 = Folder { name = "Documents"; subfolders = []; files = [file2] };;
+let disk1 = Disk { name = "C"; folders = [folder1; folder2]; files = [] };;
 
-let test2 = path disk1 "Invoice.txt";;  
-print_endline ("Test 2: " ^ (Option.value test2 ~default:"File not found"));;
+let test1 = path disk1 "Holidays.png";;
+let test2 = path disk1 "Invoice.txt";;
+let test3 = path disk1 "Invisible.txt";;
+let test4 = path disk1 "Documents";;
+let test5 = path disk1 "InvisibleFolder";;
 
-let test3 = path disk1 "NonExistent.txt"  ;;
-print_endline ("Test 3: " ^ (Option.value test3 ~default:"File not found"));;
 
-let test4 = path disk1 "Documents" ;; 
-print_endline ("Test 4: " ^ (Option.value test4 ~default:"Folder not found"));;
 
-let test5 = path disk1 "NonExistentFolder"  ;;
-print_endline ("Test 5: " ^ (Option.value test5 ~default:"Folder not found"));;
+

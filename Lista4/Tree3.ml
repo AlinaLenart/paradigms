@@ -1,95 +1,62 @@
-type 'a tree3 = 
-  | Empty  
-  | Node of 'a * 'a tree3 option * 'a tree3 option * 'a tree3 option
-;;
+type 'a tree3 =
+  | Empty
+  | Node0 of 'a
+  | Node1 of { head: 'a; tail: 'a tree3 }
+  | Node2 of { head: 'a; left: 'a tree3; right: 'a tree3 }
+  | Node3 of { head: 'a; left: 'a tree3; middle: 'a tree3; right: 'a tree3 }
 
-
-let rec combineTree3 f tree1 tree2 = 
+let rec combineTree3 f tree1 tree2 =
   match tree1, tree2 with
-  | Empty, Empty -> Empty
-  | Node (v1, l1, m1, r1), Node (v2, l2, m2, r2) ->
-      let combine_option opt1 opt2 =
-        match opt1, opt2 with
-        | None, None -> None
-        | Some t1, None -> Some Empty 
-        | None, Some t2 -> Some Empty
-        | Some t1, Some t2 -> Some (combineTree3 f t1 t2)
-      in
-      Node (f v1 v2,
-            combine_option l1 l2,
-            combine_option m1 m2,
-            combine_option r1 r2)
-  | Node (v, l, m, r), Empty
-  | Empty, Node (v, l, m, r) ->
-      let combine_single opt =
-        match opt with
-        | None -> Some Empty
-        | Some t -> Some (combineTree3 f t Empty)
-      in
-      Node (v,
-            combine_single l,
-            combine_single m,
-            combine_single r)
+  | Empty, _ | _, Empty -> Empty
+  | Node0 v1, Node0 v2 -> Node0 (f v1 v2)
+  | Node1 { head = v1; tail = t1 }, Node1 { head = v2; tail = t2 } ->
+      Node1 { head = f v1 v2; tail = combineTree3 f t1 t2 }
+  | Node2 { head = v1; left = l1; right = r1 }, Node2 { head = v2; left = l2; right = r2 } ->
+      Node2 { head = f v1 v2; left = combineTree3 f l1 l2; right = combineTree3 f r1 r2 }
+  | Node3 { head = v1; left = l1; middle = m1; right = r1 }, Node3 { head = v2; left = l2; middle = m2; right = r2 } ->
+      Node3 { head = f v1 v2; left = combineTree3 f l1 l2; middle = combineTree3 f m1 m2; right = combineTree3 f r1 r2 }
+
+  | Node2 { head = v1; left = l1; right = r1 }, Node3 { head = v2; left = l2; middle = m2; right = r2 }
+  | Node3 { head = v2; left = l2; middle = m2; right = r2 }, Node2 { head = v1; left = l1; right = r1 } ->
+      Node3 { head = f v1 v2; left = combineTree3 f l1 l2; middle = combineTree3 f Empty m2; right = combineTree3 f r1 r2 }
+
+  | Node1 { head = v1; tail = t1 }, Node2 { head = v2; left = l2; right = r2 }
+  | Node2 { head = v2; left = l2; right = r2 }, Node1 { head = v1; tail = t1 } ->
+      Node2 { head = f v1 v2; left = combineTree3 f t1 l2; right = combineTree3 f Empty r2 }
+
+  | Node1 { head = v1; tail = t1 }, Node3 { head = v2; left = l2; middle = m2; right = r2 }
+  | Node3 { head = v2; left = l2; middle = m2; right = r2 }, Node1 { head = v1; tail = t1 } ->
+      Node3 { head = f v1 v2; left = combineTree3 f t1 l2; middle = combineTree3 f Empty m2; right = combineTree3 f Empty r2 }
+
+  | Node0 v1, Node1 { head = v2; tail = _ } -> Node0 (f v1 v2)
+  | Node0 v1, Node2 { head = v2; left = _; right = _ } -> Node0 (f v1 v2)
+  | Node0 v1, Node3 { head = v2; left = _; middle = _; right = _ } -> Node0 (f v1 v2)
+
+  | Node1 { head = v1; tail = _ }, Node0 v2 -> Node0 (f v1 v2)
+  | Node2 { head = v1; left = _; right = _ }, Node0 v2 -> Node0 (f v1 v2)
+  | Node3 { head = v1; left = _; middle = _; right = _ }, Node0 v2 -> Node0 (f v1 v2)
 ;;
 
 
+let emptyTree : int tree3 = Empty;;
+let singleNodeTree : int tree3 = Node0 1;;
+let singleNodeWithChild : int tree3 = Node1 { head = 1; tail = Node0 1 };;
+let singleNodeWithTwoChildren : int tree3 = Node2 { head = 1; left = Node0 1; right = Node0 1 };;
+let singleNodeWithThreeChildren : int tree3 = Node3 { head = 1; left = Node0 1; middle = Node0 1; right = Node0 1 };;
 
+let tree1 : int tree3 = 
+  Node3 { head = 1; 
+          left = Node1 { head = 1; tail = Node0 1 };
+          middle = Node0 1;
+          right = Node0 1 };;
 
-let empty_tree : int tree3 = Empty;;
-let single_node_tree : int tree3 = Node (10, None, None, None);;
+let tree2 : int tree3 = 
+  Node3 { head = 2; 
+          left = Node1 { head = 2; tail = Empty }; 
+          middle = Empty; 
+          right = Node0 2 };;
 
-
-let tree1 : int tree3=
-  Node (1, 
-  Some (Node (2, 
-                Some (Node (8, None, None, None)), 
-                None, 
-                None)), 
-  Some (Node (3, None, None, None)), 
-  None)
-;;
-
-let tree2 : int tree3=
-  Node (10,
-        Some (Node (20, None, None, None)),
-        None,
-        Some (Node (30, None, None, None)))
-;;
-
-
-let sum x y = x + y;;
-let combined = combineTree3 sum tree1 tree2;;
-
-
-(* - : val combined : int tree3 =
-  Node (11, 
-        Some (Node (22, Some Empty, None, None)),
-        Some Empty,
-        Some Empty)
-*)
-(*
-      1
-    / \ \
-   2   3 None
-  /
- 8
-*)
-
-(*
-       10
-    / \    \
-  20  None 30
-*)
-
-(*
-       11
-    / \    \
-  22  Empty Empty
-  /
-Empty
-*)
-
-
-
-
-
+let combinedTree1 = combineTree3 (fun x y -> x + y) tree1 tree2;;
+let combinedTree2 = combineTree3 (fun x y -> x + y) emptyTree tree2;;
+let combinedTree3 = combineTree3 (fun x y -> x + y) singleNodeTree tree2;;
+let combinedTree4 = combineTree3 (fun x y -> x + y) singleNodeWithTwoChildren singleNodeWithThreeChildren;;
