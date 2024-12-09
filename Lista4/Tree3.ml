@@ -56,7 +56,7 @@ let tree2 : int tree3 =
           middle = Empty; 
           right = Node0 2 };;
 
-let combinedTree1 = combineTree3 (fun x y -> x + y) tree1 tree2;;
+let combinedTree1 = combineTree3 (+) tree1 tree2;;
 let combinedTree2 = combineTree3 (fun x y -> x + y) emptyTree tree2;;
 let combinedTree3 = combineTree3 (fun x y -> x + y) singleNodeTree tree2;;
 let combinedTree4 = combineTree3 (fun x y -> x + y) singleNodeWithTwoChildren singleNodeWithThreeChildren;;
