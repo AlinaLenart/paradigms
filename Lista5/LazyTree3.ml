@@ -1,26 +1,26 @@
-type 'a lazy_tree =
-  | Empty
-  | Node of { value: 'a Lazy.t; left: 'a lazy_tree Lazy.t; middle: 'a lazy_tree Lazy.t; right: 'a lazy_tree Lazy.t }
+type 'a lazy_tree = 
+  | LEmpty  
+  | LNode of 'a * (unit -> 'a lazy_tree) * (unit -> 'a lazy_tree) * (unit -> 'a lazy_tree)
+;;
 
 type 'a llist = 
 | LNil  
 | LCons of 'a * (unit -> 'a llist)  (*elemnt i funkcja generujaca reszte listy*)
-
+;;
 
 let rec traverse order tree =
   let rec process_tree t =
     match t with
-    | Empty -> LNil
-    | Node { value; left; middle; right } ->
-        let value = Lazy.force value in  (*Lazy.force zeby uzyskac wartosc leniwa*)
-        let children = order t in
-        LCons (value, fun () -> process_children children)  
+    | LEmpty -> LNil
+    | LNode (value, left, middle, right) ->
+        let children = order t in  
+        LCons (value, fun () -> process_children children)  (*dodaje wartosc do listy*)
   and process_children = function
-    | [] -> LNil
+    | [] -> LNil  (*brak dzieci*)
     | child :: rest ->
-        match Lazy.force child with
-        | Empty -> process_children rest
-        | node -> append_lists (process_tree node) (fun () -> process_children rest)  
+        match child () with
+        | LEmpty -> process_children rest  (*puste dziecko -> idzie do reszty *)
+        | node -> append_lists (process_tree node) (fun () -> process_children rest)
   and append_lists l1 l2 =
     match l1 with
     | LNil -> l2 ()
@@ -31,47 +31,20 @@ let rec traverse order tree =
 
 
 let tree =
-  Node {
-    value = lazy 1;  
-    left = lazy (Node {
-      value = lazy 2;  
-      left = lazy (Node {
-        value = lazy 5;
-        left = lazy Empty;
-        middle = lazy Empty;
-        right = lazy Empty;
-      });
-      middle = lazy (Node {
-        value = lazy 6;
-        left = lazy Empty;
-        middle = lazy Empty;
-        right = lazy Empty;
-      });
-      right = lazy Empty;
-    });
-    middle = lazy (Node {
-      value = lazy 3;
-      left = lazy Empty;
-      middle = lazy Empty;
-      right = lazy Empty;
-    });
-    right = lazy (Node {
-      value = lazy 4;
-      left = lazy Empty;
-      middle = lazy Empty;
-      right = lazy Empty;
-    });
-  }
+  LNode (
+    1,
+    (fun () -> LNode (
+        2,
+        (fun () -> LNode (5, (fun () -> LEmpty), (fun () -> LEmpty), (fun () -> LEmpty))),
+        (fun () -> LNode (6, (fun () -> LEmpty), (fun () -> LEmpty), (fun () -> LEmpty))),
+        (fun () -> LEmpty)
+      )),
+    (fun () -> LNode (3, (fun () -> LEmpty), (fun () -> LEmpty), (fun () -> LEmpty))),
+    (fun () -> LNode (4, (fun () -> LEmpty), (fun () -> LEmpty), (fun () -> LEmpty)))
+  )
 ;;
 
-let tree_empty =
-  Node {
-    value = lazy Empty;  
-    left = lazy Empty;
-    middle = lazy Empty;
-    right = lazy Empty;
-  }
-;;
+let tree_empty = LEmpty;;
 
 (*
         1
@@ -79,19 +52,23 @@ let tree_empty =
     2   3   4
    / \
   5   6
-125634, *)
+lewa: 125634, prawa: 143265
+*)
 
 
 let left_first = function
-  | Node { left; middle; right; _ } ->
-      [ left; middle; right ]  (*ewaluacja leniwa, zwraca lazy.t*)
-  | Empty -> [] 
+  | LEmpty -> []
+  | LNode (_, left, middle, right) -> [left; middle; right]
 ;;
 
 let right_first = function
-  | Node { left; middle; right; _ } ->
-      [ right; middle; left ]  
-  | Empty -> [] 
+  | LEmpty -> []
+  | LNode (_, left, middle, right) -> [right; middle; left]
+;;
+
+let middle_first = function
+  | LEmpty -> []
+  | LNode (_, left, middle, right) -> [middle; left; right]
 ;;
 
 let rec to_list = function
@@ -101,7 +78,7 @@ let rec to_list = function
 
 let result_list_lazy1 = traverse left_first tree;;
 let result_list1 = to_list result_list_lazy1;;
-  
+
 let result_list_lazy2 = traverse right_first tree;;
 let result_list2 = to_list result_list_lazy2;;
 
