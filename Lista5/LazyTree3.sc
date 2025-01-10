@@ -1,44 +1,47 @@
 sealed trait LazyTree[+A]
 case object LEmpty extends LazyTree[Nothing]
-case class LNode[+A](value: A,
+case class LNode[A](value: A,
                       left: () => LazyTree[A],
                       middle: () => LazyTree[A],
                       right: () => LazyTree[A]) extends LazyTree[A]
 
-sealed trait LList[+A]
-case object LNil extends LList[Nothing]
-case class LCons[+A](head: A, tail: () => LList[A]) extends LList[A]
+//sealed trait LList[+A]
+//case object LNil extends LList[Nothing]
+//case class LCons[A](head: A, tail: () => LList[A]) extends LList[A]
 
-def traverse[A](order: LazyTree[A] => List[() => LazyTree[A]], tree: LazyTree[A]): LList[A] = {
-  def process_tree(t: LazyTree[A]): LList[A] = t match {
-    case LEmpty => LNil
-    case LNode(value, left, middle, right) =>
-      val children = order(t)
-      LCons(value, () => process_children(children))
+def traverse[A](order: LazyTree[A] => List[() => LazyTree[A]], tree: LazyTree[A]): LazyList[A] = {
+  def process_tree(t: LazyTree[A]): LazyList[A] = 
+    t match {
+      case LEmpty => LazyList()
+      case LNode(value, left, middle, right) =>
+        val children = order(t)
+        value #:: process_children(children)
   }
 
-  def process_children(children: List[() => LazyTree[A]]): LList[A] =
-    children match {
-      case Nil => LNil
+  def process_children(children: List[() => LazyTree[A]]): LazyList[A] =
+    children match { //lista leniwych funkcji wskazujacych na dzieci wezla
+      case Nil => LazyList()
       case child :: rest =>
-        child() match { //???
+        child() match {
           case LEmpty => process_children(rest)
           case node => append_lists(process_tree(node), () => process_children(rest))
         }
   }
 
-  def append_lists(l1: LList[A], l2: () => LList[A]): LList[A] = l1 match {
-    case LNil => l2()
-    case LCons(head, tail) => LCons(head, () => append_lists(tail(), l2))
+  def append_lists(l1: LazyList[A], l2: () => LazyList[A]): LazyList[A] =
+    l1 match {
+      case LazyList() => l2()
+      case head #:: tail => head #:: append_lists(tail, l2)
   }
 
   process_tree(tree)
 }
 
 
-def to_list[A](llist: LList[A]): List[A] = llist match {
-  case LNil => Nil
-  case LCons(head, tail) => head :: to_list(tail())
+def to_list[A](llist: LazyList[A]): List[A] =
+  llist match {
+    case LazyList() => List()
+    case head #:: tail => head :: to_list(tail)
 }
 
 val tree: LazyTree[Int] = LNode(1,
@@ -74,4 +77,13 @@ val resultList2 = to_list(resultLazyList2)
 val resultLazyListEmpty = traverse(left_first, tree_empty)
 val resultListEmpty = to_list(resultLazyListEmpty)
 
+def inifinityTree: LazyTree[Int] =
+  LNode(1,
+    () => inifinityTree,
+    () => inifinityTree,
+    () => inifinityTree)
 
+val tree_infinity: LazyTree[Int] = inifinityTree
+
+val resultLazyListInfinity = traverse(left_first, tree_infinity)
+val resultListInfinity = to_list(resultLazyListInfinity)
