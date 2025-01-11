@@ -45,7 +45,7 @@ let pascalGift (n : int) : int list list =
     let row = !side @ List.nth triangle i @ List.rev !side in
     result := !result @ [row]
   done;
-  !result
+  !result 
 
 let print_box (box : int list list) =
   List.iter (fun row -> List.iter (fun x -> Printf.printf "%d " x) row; print_newline ()) box
