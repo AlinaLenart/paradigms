@@ -7,72 +7,74 @@ def pascalTriangle(n: Int): Array[Array[Int]] = {
         triangle(i)(j) = 1
       else
         triangle(i)(j) = triangle(i - 1)(j - 1) + triangle(i - 1)(j)
-
-
   triangle
 }
 
 def pascalGift(n: Int): Array[Array[Int]] = {
-  val size = 2 * n - 1
+  val size = 2 * n - 1 // wysokosc pudelka
   val gift = Array.ofDim[Int](size, n)
   val triangle = pascalTriangle(n)
 
-  // Górna część pudełka
-  for (i <- n - 1 to 0 by -1)
-    val side = Array.fill(n)(0)
+  //gorna czesc pudelka
+  for (i <- (n - 1) to 0 by -1)  // zaczynam od dolu trojkąta
+    val edge = Array.fill[Int](n)(0)
     var x = i + 2
     var y = i + 1
     var idx = 0
 
-    // Budowanie lewej strony
+    //budowanie lewej strony
     while (x < n && y < n)
-      side(idx) = triangle(x)(y)
+      edge(idx) = triangle(x)(y)
       idx += 1
       x += 2
       y += 1
 
-    // Lewa strona wiersza
+    //lewa strona wiersza
     for (j <- 0 until idx)
-      gift(n - 1 - i)(j) = side(j)
+      gift(n - 1 - i)(idx - 1 - j) = edge(j)
 
-    // Środek wiersza
+    //srodek wiersza
     for (j <- 0 to i)
       gift(n - 1 - i)(idx + j) = triangle(i)(j)
 
-    // Prawa strona wiersza
+    //prawa strona wiersza
     for (j <- 0 until idx)
-      gift(n - 1 - i)(idx + i + 1 + j) = side(j)
+      gift(n - 1 - i)(idx + i + 1 + j) = edge(j)
 
-  // Dolna część pudełka
+
+  //dolna czesc pudelka
   for (i <- 1 until n)
-    val side = Array.fill(n)(0)
+    val edge = Array.fill[Int](n)(0)
     var x = i + 2
     var y = i + 1
     var idx = 0
 
-    // Budowanie lewej strony
+    //budowanie lewej strony
     while (x < n && y < n)
-      side(idx) = triangle(x)(y)
+      edge(idx) = triangle(x)(y)
       idx += 1
       x += 2
       y += 1
 
-    // Lewa strona wiersza
+    //lewa strona wiersza
     for (j <- 0 until idx)
-      gift(n - 1 + i)(j) = side(j)
+      gift(n - 1 + i)(idx - 1 - j) = edge(j)
 
-    // Środek wiersza
+    //srodek wiersza
     for (j <- 0 to i)
       gift(n - 1 + i)(idx + j) = triangle(i)(j)
 
-    // Prawa strona wiersza
+    // prawa strona wiersza
     for (j <- 0 until idx)
-      gift(n - 1 + i)(idx + i + 1 + j) = side(j)
+      gift(n - 1 + i)(idx + i + 1 + j) = edge(j)
 
   gift
 }
-
+val gift9 = pascalGift(9)
 val gift5 = pascalGift(5)
+val gift4 = pascalGift(4)
 val gift3 = pascalGift(3)
+val gift2 = pascalGift(2)
 val gift1 = pascalGift(1)
 val gift0 = pascalGift(0)
+
