@@ -1,3 +1,16 @@
+let pascalTriangle (n : int) : int array array =
+  let triangle = Array.make_matrix n n 0 in
+  for i = 0 to n - 1 do
+    for j = 0 to i do
+      if j = 0 || j = i then
+        triangle.(i).(j) <- 1
+      else
+        triangle.(i).(j) <- triangle.(i - 1).(j - 1) + triangle.(i - 1).(j)
+    done
+  done;
+  triangle
+;;
+
 let pascalGift (n : int) : int array array =
   let size = 2 * n - 1 in (*wysokosc pudelka*)
   let gift = Array.make_matrix size n 0 in
@@ -10,7 +23,7 @@ let pascalGift (n : int) : int array array =
     let y = ref (i + 1) in
     let idx = ref 0 in
 
-    (* budowanie lewej strony *)
+    (* budowanie boczkow *)
     while !x < n && !y < n do
       edge.(!idx) <- triangle.(!x).(!y);
       idx := !idx + 1;
@@ -20,10 +33,10 @@ let pascalGift (n : int) : int array array =
 
     (* lewa strona wiersza *)
     for j = 0 to !idx - 1 do
-      gift.(n - 1 - i).(!idx - 1 - j) <- edge.(j) (*j zmienilam na !idx - 1 - j  *)
-    done;
+      gift.(n - 1 - i).(!idx - 1 - j) <- edge.(j) (*j zmienilam na !idx - 1 - j *)
+    done; (*odwrotniw!!!*)
 
-    (* środek wiersza *)
+    (* srodek wiersza *)
     for j = 0 to i do
       gift.(n - 1 - i).(!idx + j) <- triangle.(i).(j) (* wiersz i z pascalTriangle *)
     done;
@@ -41,7 +54,7 @@ let pascalGift (n : int) : int array array =
     let y = ref (i + 1) in
     let idx = ref 0 in
 
-    (* budowanie lewej strony *)
+    (* budowanie boczkow *)
     while !x < n && !y < n do
       edge.(!idx) <- triangle.(!x).(!y);
       idx := !idx + 1;
@@ -54,7 +67,7 @@ let pascalGift (n : int) : int array array =
       gift.(n - 1 + i).(!idx - 1 - j) <- edge.(j) (*j zmienilam na !idx - 1 - j  *)
     done;
 
-    (* środek wiersza *)
+    (* srodek wiersza *)
     for j = 0 to i do
       gift.(n - 1 + i).(!idx + j) <- triangle.(i).(j)
     done;

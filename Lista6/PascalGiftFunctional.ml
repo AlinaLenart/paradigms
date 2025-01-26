@@ -71,7 +71,7 @@ let buildTop =
 (*dolna czesc prezent*)
 let buildBottom =
   let rec helper acc i triangle n =
-    if i >= n then List.rev acc
+    if i >= n then List.rev acc 
     else
       let edgeElements = collectElements (i + 2) (i + 1) n triangle in
       let leftSide = List.rev edgeElements in
